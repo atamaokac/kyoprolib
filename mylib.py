@@ -311,7 +311,7 @@ def pow_mod(x, n, p):
     return ans
 
 class SegmentTree:
-    def __init__(self, value, N=0, comp=lambda x,y: x<=y):
+    def __init__(self, value, N=0, comp=lambda x,y: x<=y, reverse=False):
         M = max(len(value),N)
         N = 2**(len(bin(M))-3)
         if N < M: N *= 2
@@ -322,7 +322,7 @@ class SegmentTree:
         self.value = [None] * N
         for i, v in enumerate(value):
             self.value[i] = v
-        self.comp = lambda x, y: True if y is None else False if x is None else comp(x,y)
+        self.comp = lambda x, y: True if y is None else False if x is None else comp(x,y)^reverse
         for i in range(N-2,-1,-1):
             left_i, right_i = self.node[2*i+1], self.node[2*i+2]
             left_v, right_v = self.value[left_i], self.value[right_i]
@@ -348,10 +348,13 @@ class SegmentTree:
                 self.node[i] = new_i
 
     def get_input(self, n):
-        return self.value[n]
+        if n is None:
+            return None
+        else:
+            return self.value[n]
 
     def get_output(self, a=0, b=-1):
-        return self.value[self.get_output_index(a,b)]
+        return self.get_input(self.get_output_index(a,b))
 
     def get_output_index(self,
                          a=0, b=-1,
@@ -367,8 +370,10 @@ class SegmentTree:
         else:
             left_i = self.get_output_index(a,b,2*k+1,l,(l+r)//2)
             right_i = self.get_output_index(a,b,2*k+2,(l+r)//2,r)
-            left_v, right_v = self.value[left_i], self.value[right_i]
-            if self.comp(left_v, right_v):
+            left_v, right_v = self.get_input(left_i), self.get_input(right_i)
+            if left_v is None and right_v is None:
+                return None
+            elif self.comp(left_v, right_v):
                 return left_i
             else:
                 return right_i
