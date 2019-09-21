@@ -386,7 +386,7 @@ class SegAccumCalc:
             left, right = self.node[2*i+1], self.node[2*i+2]
             self.node[i] = self.calc(left, right)
 
-    def set_input(self, n, v):
+    def update(self, n, v):
         i = (self.N-1) + n
         self.node[i] = v
         while i > 0:
@@ -398,12 +398,12 @@ class SegAccumCalc:
             else:
                 self.node[i] = new
     
-    def get_input(self, n):
+    def at(self, n):
         return self.node[(self.N-1)+n]
 
-    def get_output(self,
-                   a=0, b=-1,
-                   k=0, l=0, r=-1):
+    def query(self,
+              a=0, b=-1,
+              k=0, l=0, r=-1):
         if b < 0:
             b = self.N
         if r < 0:
@@ -413,8 +413,8 @@ class SegAccumCalc:
         elif r <= a or b <= l:
             return None
         else:
-            left = self.get_output(a,b,2*k+1,l,(l+r)//2)
-            right = self.get_output(a,b,2*k+2,(l+r)//2,r)
+            left = self.query(a,b,2*k+1,l,(l+r)//2)
+            right = self.query(a,b,2*k+2,(l+r)//2,r)
             return self.calc(left,right)
 
 ## Incomplete Codes... ###
