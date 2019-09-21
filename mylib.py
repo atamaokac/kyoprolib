@@ -2,7 +2,7 @@ from collections import defaultdict
 import bisect
 
 import sys
-input = sys.stdin.readline
+input = lambda: sys.stdin.readline().rstrip()
 inpl = lambda: list(map(int,input().split()))
 
 class CountUp:
