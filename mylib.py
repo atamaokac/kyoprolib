@@ -331,7 +331,7 @@ class SegmentTree:
             else:
                 self.node[i] = right_i
 
-    def set_input(self, n, v):
+    def update(self, n, v):
         self.value[n] = v
         i = (self.N-1) + n
         while i > 0:
@@ -347,18 +347,18 @@ class SegmentTree:
             else:
                 self.node[i] = new_i
 
-    def get_input(self, n):
+    def at(self, n):
         if n is None:
             return None
         else:
             return self.value[n]
 
-    def get_output(self, a=0, b=-1):
-        return self.get_input(self.get_output_index(a,b))
+    def query(self, a=0, b=-1):
+        return self.at(self.query_index(a,b))
 
-    def get_output_index(self,
-                         a=0, b=-1,
-                         k=0, l=0, r=-1):
+    def query_index(self,
+                    a=0, b=-1,
+                    k=0, l=0, r=-1):
         if b < 0:
             b = self.N
         if r < 0:
@@ -368,9 +368,9 @@ class SegmentTree:
         elif r <= a or b <= l:
             return None
         else:
-            left_i = self.get_output_index(a,b,2*k+1,l,(l+r)//2)
-            right_i = self.get_output_index(a,b,2*k+2,(l+r)//2,r)
-            left_v, right_v = self.get_input(left_i), self.get_input(right_i)
+            left_i = self.query_index(a,b,2*k+1,l,(l+r)//2)
+            right_i = self.query_index(a,b,2*k+2,(l+r)//2,r)
+            left_v, right_v = self.at(left_i), self.at(right_i)
             if left_v is None and right_v is None:
                 return None
             elif self.comp(left_v, right_v):
