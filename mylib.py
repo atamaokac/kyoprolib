@@ -356,27 +356,21 @@ class SegmentTree:
     def query(self, a=0, b=-1):
         return self.at(self.query_index(a,b))
 
-    def query_index(self,
-                    a=0, b=-1,
-                    k=0, l=0, r=-1):
-        if b < 0:
-            b = self.N
-        if r < 0:
-            r = self.N
-        if a <= l and r <= b:
-            return self.node[k]
-        elif r <= a or b <= l:
-            return None
-        else:
-            left_i = self.query_index(a,b,2*k+1,l,(l+r)//2)
-            right_i = self.query_index(a,b,2*k+2,(l+r)//2,r)
-            left_v, right_v = self.at(left_i), self.at(right_i)
-            if left_v is None and right_v is None:
-                return None
-            elif self.comp(left_v, right_v):
-                return left_i
-            else:
-                return right_i
+    def query_index(self, l=0, r=-1):
+        if r < 0: r = self.N
+        L = l + self.N; R = r + self.N
+        s = None
+        while L < R:
+            if R & 1:
+                R -= 1
+                if self.comp(self.at(self.node[R-1]), self.at(s)):
+                    s = self.node[R-1]
+            if L & 1:
+                if self.comp(self.at(self.node[L-1]), self.at(s)):
+                    s = self.node[L-1]
+                L += 1
+            L >>= 1; R >>= 1
+        return s
 
 class SegAccumCalc:
     def __init__(self, value, N=0, calc=lambda x,y: x+y):
@@ -447,3 +441,9 @@ class LinkedList:
         return v
     
 #    def pop(self):
+
+
+if __name__ == '__main__':
+    #print(divisors(384,reverse=True))
+    sg = SegmentTree([1,2,-4,3,4],reverse=True)
+    print(sg.query_index(0,-1))
