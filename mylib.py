@@ -401,21 +401,19 @@ class SegAccumCalc:
     def at(self, n):
         return self.node[(self.N-1)+n]
 
-    def query(self,
-              a=0, b=-1,
-              k=0, l=0, r=-1):
-        if b < 0:
-            b = self.N
-        if r < 0:
-            r = self.N
-        if a <= l and r <= b:
-            return self.node[k]
-        elif r <= a or b <= l:
-            return None
-        else:
-            left = self.query(a,b,2*k+1,l,(l+r)//2)
-            right = self.query(a,b,2*k+2,(l+r)//2,r)
-            return self.calc(left,right)
+    def query(self, l=0, r=-1):
+        if r < 0: r = self.N
+        L = l + self.N; R = r + self.N
+        s = None
+        while L < R:
+            if R & 1:
+                R -= 1
+                s = self.calc(self.node[R-1], s)
+            if L & 1:
+                s = self.calc(self.node[L-1], s)
+                L += 1
+            L >>= 1; R >>= 1
+        return s
 
 ## Incomplete Codes... ###
 class LinkedList:
