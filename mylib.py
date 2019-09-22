@@ -347,8 +347,8 @@ class SegmentTree:
         else:
             return self.value[n]
 
-    def query(self, a=0, b=-1):
-        return self.at(self.query_index(a,b))
+    def query(self, l=0, r=-1):
+        return self.at(self.query_index(l,r))
 
     def query_index(self, l=0, r=-1):
         if r < 0: r = self.N
