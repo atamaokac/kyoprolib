@@ -326,10 +326,7 @@ class SegmentTree:
         for i in range(N-2,-1,-1):
             left_i, right_i = self.node[2*i+1], self.node[2*i+2]
             left_v, right_v = self.value[left_i], self.value[right_i]
-            if self.comp(left_v, right_v):
-                self.node[i] = left_i
-            else:
-                self.node[i] = right_i
+            self.node[i] = left_i if self.comp(left_v, right_v) else right_i
 
     def update(self, n, v):
         self.value[n] = v
@@ -338,10 +335,7 @@ class SegmentTree:
             i = (i-1)//2
             left_i, right_i = self.node[2*i+1], self.node[2*i+2]
             left_v, right_v = self.value[left_i], self.value[right_i]
-            if self.comp(left_v, right_v):
-                new_i = left_i
-            else:
-                new_i = right_i
+            new_i = left_i if self.comp(left_v, right_v) else right_i
             if new_i == self.node[i] and new_i != n:
                 break
             else:
