@@ -45,11 +45,14 @@ class UnionFind:
     def connected(self, m, n):
         return self.root(m) == self.root(n)
 
-    def groups_num(self):
+    def groups(self):
         if isinstance(self.parent,list):
-            return len(list(filter(lambda x: x<0, self.parent)))
+            return list(filter(lambda x: x<0, self.parent))
         else: # self.parent: defaultdict
-            return len(list(filter(lambda x: x<0, self.parent.values())))
+            return list(filter(lambda x: x<0, self.parent.values()))
+ 
+    def groups_num(self):
+        return len(self.groups())
 
     def elements(self):
         if isinstance(self.parent,list):
