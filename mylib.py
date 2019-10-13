@@ -285,7 +285,7 @@ class Factorizer:
         return factors, powers
 
 
-def inv_mod(a, p=10**9+7):
+def inv_mod_rec(a, p=10**9+7):
     def inv_mod_sub(a, p):
         if a == 1:
             return 1, 0
@@ -296,6 +296,20 @@ def inv_mod(a, p=10**9+7):
     if p < 0: p = -p
     a %= p
     return inv_mod_sub(a,p)[0] % p
+
+def inv_mod(a, p=10**9+7):
+    p = abs(p)
+    a %= p
+    stack = []
+    p0 = p
+    while a > 1:
+        d, a, p = p//a, p%a, a
+        stack.append(d)
+    x, y = 1, 0
+    while stack:
+        d = stack.pop()
+        x, y = y-d*x, x
+    return x % p0
 
 def comb_mod(n,k,p):
     ans = 1
@@ -440,5 +454,8 @@ class LinkedList:
 
 if __name__ == '__main__':
     #print(divisors(384,reverse=True))
-    sg = SegmentTree([1,2,-4,3,4],reverse=True)
-    print(sg.query_index(0,-1))
+#    sg = SegmentTree([1,2,-4,3,4],reverse=False)
+#    print(sg.query(0,-1))
+
+    for i in range(1,15):
+        print(inv_mod_rec(i), inv_mod(i))
