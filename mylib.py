@@ -57,9 +57,9 @@ class UnionFind:
 
     def groups(self):
         if isinstance(self.parent,list):
-            return list(filter(lambda x: x<0, self.parent))
+            return list(filter(lambda i: self.parent[i]<0, range(len(self.parent))))
         else: # self.parent: defaultdict
-            return list(filter(lambda x: x<0, self.parent.values()))
+            return list(filter(lambda i: self.parent[i]<0, self.parent.keys()))
  
     def groups_num(self):
         return len(self.groups())
