@@ -22,13 +22,23 @@ class UnionFind:
         else:
             self.parent = [-1]*int(N)
 
-    def root(self, n):
+    def root_rec(self, n):
         if self.parent[n] < 0:
             return n
         else:
             m = self.root(self.parent[n])
             self.parent[n] = m
             return m
+
+    def root(self, n):
+        stack = []
+        while n >= 0:
+            stack.append(n)
+            n = self.parent[n]
+        m = stack.pop()
+        while stack:
+            self.parent[stack.pop()] = m
+        return m
 
     def merge(self, m, n):
         rm = self.root(m)
