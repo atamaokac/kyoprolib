@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <numeric>
 #include <map>
-#include <boost/function.hpp>
+//#include <boost/function.hpp>
+#include <functional>
 #include <cmath>
-using namespace std;
 typedef long long int llint;
 typedef unsigned long long int ullint;
 std::string YesNo[] = {"No","Yes"};
@@ -33,12 +33,12 @@ template<typename K, typename V>
 class defaultmap: public std::map<K,V>
 {
 private:
-    boost::function<V(K)> defaultfunc;
+    std::function<V(K)> defaultfunc;
 public:
-    defaultmap(boost::function<V(K)> df) { defaultfunc = df; };
-    auto& operator[](K key) {
+    defaultmap(std::function<V(K)> df) { defaultfunc = df; };
+    auto& operator[](const K& key) {
         auto itr = this->find(key);
-        if( itr != this->end() )
+        if (itr != this->end())
             return itr->second;
         else
             return this->std::map<K,V>::operator[](key)=defaultfunc(key);
@@ -49,15 +49,144 @@ class CountUp
 private:
     int index;
 public:
-    CountUp() { index = 0; };
+    CountUp(int start=0) { index = start; };
     auto operator()(...) { return index++; };
     auto next() { return index; };
 };
 /* Usage of CountUp:
-    CountUp cu;
-    auto dm = defaultmap<K, int>(cu);
+    auto ui = defaultmap<K, int>(CountUp());
 */
 
+int bitlen(unsigned long long int n)
+{
+    int total = sizeof(n) * 8;
+    int l = total, r = -1, mid;
+    while (l > r+1) {
+        mid = (l+r)/2;
+        if (n >> mid == 0) {
+            l = mid;
+        } else {
+            r = mid;
+        }
+    }
+    return l;
+}
+template<typename T>
+class SegmentTree
+{
+private:
+    unsigned int N;
+    std::vector<int> node;
+    std::vector<T> data;
+    std::function<bool(int,int)> comp;
+    const std::function<bool(int,int)> defaultcomp = [this](int i, int j) {
+        if (j < 0) {
+            return true;
+        } else if (i < 0) {
+            return false;
+        } else {
+            return data[i] < data[j];
+        } 
+    };
+
+public:
+    SegmentTree(const std::vector<T>& data,
+                unsigned int N_=0,
+                bool reverse = false,
+                std::function<bool(int,int)> comp = nullptr
+                )
+    {
+        this->data = data;
+        if (comp == nullptr) {
+            comp = defaultcomp;
+        }
+        if (reverse) {
+            this->comp = [comp] (int i, int j) { return comp(j,i); };
+        } else {
+            this->comp = [comp] (int i, int j) { return comp(i,j); };
+        }
+        
+        unsigned int M = std::max((unsigned int)(data.size()), N_);
+        N = 1 << std::max(bitlen(M)-1, 0);
+        if (N < M) N *= 2;
+        node.resize(2*N-1);
+        for (auto i=0; i<data.size(); i++) {
+            node[N-1+i] = i;
+        }
+        for (auto i=data.size(); i<N; i++) {
+            node[N-1+i] = -1;
+        }
+
+        for (int i=N-2; i>=0; i--) {
+            auto left_i = node[2*i+1], right_i = node[2*i+2];
+            node[i] = this->comp(left_i, right_i) ? left_i : right_i;
+        }
+    };
+
+    const T& at(int i) {
+        return data[i];
+    };
+
+    void update(int n, const T& v) {
+        data[n] = v;
+        int i = N + n - 1;
+        while (i > 0) {
+            i = (i-1)/2;
+            int left_i, right_i = node[2*i+1], node[2*i+2];
+            auto new_i = comp(left_i, right_i) ? left_i : right_i;
+            if (new_i == node[i] and new_i != n) {
+                break;
+            } else {
+                node[i] = new_i;
+            }
+        }
+    };
+
+    const T& query(int l=0, int r=-1) { return data[query_index(l, r)]; };
+
+    int query_index(int l=0, int r=-1) {
+        if (r < 0) r = N;
+        int L = l + N, R = r + N;
+        int s = -1;
+        while (L < R) {
+            if (R & 1) {
+                R -= 1;
+                if (comp(node[R-1], s)) s = node[R-1];
+            }
+            if (L & 1) {
+                if (comp(node[L-1], s)) s = node[L-1];
+                L += 1;
+            }
+            L >>= 1; R >>= 1;
+        }
+        return s;
+    };
+};
+
+template<typename Int>
+auto inv_mod_norec(Int a, Int p=1000000007)
+{
+    p = std::abs(p);
+    a %= p;
+    std::vector<Int> stack;
+    auto p0 = p;
+    while (a > 1) {
+        stack.push_back(p/a);
+        const auto new_a = p % a;
+        p = a;
+        a = new_a;
+    }
+    Int x = 1, y = 0;
+    while (stack.size()) {
+        const auto new_x = y - x*stack.back();
+        stack.pop_back();
+        y = x;
+        x = new_x;
+    }
+    x %= p0;
+    if (x < 0) x += p0;
+    return x;
+}
 
 template<typename T>
 auto inv_mod_sub(T a, T p) {
@@ -81,12 +210,12 @@ auto inv_mod(T a, T p) {
     return ans;
 }
 
-template<typename T>
-auto pow_mod(T x, T n, T p) {
+template<typename Int>
+auto pow_mod(Int x, Int n, Int p) {
     if(p == 1 || p == -1) {
         return 0;
     }
-    T ans = 1;
+    Int ans = 1;
     while(n > 0) {
         if(n % 2) ans = ans * x % p;
         n /= 2;
@@ -101,13 +230,13 @@ class UnionFind
 private:
     typedef std::vector<int> P;
     P parent;
-    P el;
+    // P el;
     int gN;
 public:
     UnionFind(int N) {
         parent = std::move(P(N,-1));
-        el = std::move(P(N));
-        loop(i,N) el[i]=i;
+        // el = std::move(P(N));
+        // loop(i,N) el[i]=i;
         gN = N;
     };
 
@@ -139,7 +268,7 @@ public:
     auto connected(int m, int n) { return root(m) == root(n); };
     auto groups_num() { return gN; };
     auto elements_num() { return parent.size(); };
-    const auto& elements() { return el; };
+    // const auto& elements() { return el; };
 };
 
 template<typename T>
@@ -221,24 +350,222 @@ public:
 };
 
 
+template<typename T>
+class heapq : public std::vector<T>
+{
+private:
+    void down_heapify(std::size_t i) {
+        auto m = i;
+        auto first_leaf = this->size()/2;
+        while(i < first_leaf) {
+            auto left = i*2 + 1;
+            auto right = i*2 + 2;
+            for(auto k : {left, right}) {
+                if(k < this->size() && (*this)[k] < (*this)[m]) {
+                    m = k;
+                }
+            }
+            if(m == i) {
+                return;
+            } else {
+                std::swap((*this)[i], (*this)[m]);
+                i = m;
+            }
+        }
+    };
+
+    void up_heapify(std::size_t i) {
+        while(i > 0) {
+            auto parent = (i-1)/2;
+            if((*this)[i] < (*this)[parent]) {
+                std::swap((*this)[i], (*this)[parent]);
+                i = parent;
+            } else {
+                return;
+            }
+        }
+    };
+
+public:
+    template<typename ...Args>
+    heapq(Args ...args) : std::vector<T>(args...) {
+        heapify();
+    };
+
+    void heapify() {
+        auto first_leaf = this->size()/2;
+        for(auto i=first_leaf; i>0; i--) {
+            down_heapify(i-1);
+        }
+    };
+
+    void heappush(const T& x) {
+        this->push_back(x);
+        up_heapify(this->size()-1);
+    };
+
+    T heappop() {
+        auto ret = std::move(this->front());
+        this->front() = std::move(this->back());
+        this->pop_back();
+        down_heapify(0);
+        return ret;
+    };
+
+    T heappoppush(const T& x) {
+        auto ret = std::move(this->front());
+        this->front() = x;
+        down_heapify(0);
+        return ret;        
+    };
+
+    T heappushpop(const T& x) {
+        if(x <= this->front()) {
+            return x;
+        } else {
+            return heappoppush(x);
+        }
+    };
+};
+
+
+template <typename T>
+auto get_sequence(const std::vector<T>& array) {
+    if (array.size() == 0) {
+        return std::make_pair(std::vector<T>(0), std::vector<int>(0));
+    }
+    std::vector<T> elements;
+    std::vector<int> nums;
+    int n = 1;
+    auto prev = array.begin();
+    for (auto itr = prev+1; itr != array.end(); ++itr) {
+        if (*itr == *prev) {
+            n ++;
+        } else {
+            elements.push_back(*prev);
+            nums.push_back(n);
+            prev = itr;
+            n = 1;
+        }
+    }
+    elements.push_back(*prev);
+    nums.push_back(n);
+    return std::make_pair(std::move(elements), std::move(nums));
+}
+
+template <typename T>
+auto divisors(T n, bool sort=true, bool reverse=false)
+{
+    auto sqn = T(std::sqrt(n));
+    std::vector<T> div_list;
+    T loopto;
+    if (sqn*sqn == n) {
+        div_list.push_back(sqn);
+        loopto = sqn;
+    } else {
+        loopto = sqn + 1;
+    }
+    for (T i=1; i < loopto; i++) {
+        if (n % i == 0) {
+            div_list.push_back(i);
+            div_list.push_back(n/i);
+        }
+    }
+    if (sort) {
+        if (reverse) std::sort(div_list.begin(),div_list.end(),std::greater<T>());
+        else std::sort(div_list.begin(),div_list.end());
+    }
+    return div_list;
+}
+
+
+// bisect functions with key
+template<typename T>
+auto bisect_left_withkey(T a, std::vector<T> x, int lo=0, int hi=-1,
+                         std::function<T(T)> key=[](T x){ return x; },
+                         bool keyvalue_x=false)
+{
+    auto left = lo;
+    auto right = hi < 0 ? a.size() : hi;
+    auto kx = keyvalue_x ? x : key(x);
+    while (left + 1 < right) {
+        auto mid = (left + right)/2;
+        auto kn = key(a[mid]);
+        if (kx <= kn)
+            right = mid;
+        else
+            left = mid;
+    }
+    if (key(a[left]) == kx)
+        return left;
+    else
+        return right;
+}
+
+template<typename T>
+auto bisect_right_withkey(T a, std::vector<T> x, int lo=0, int hi=-1,
+                          std::function<T(T)> key=[](T x){ return x; },
+                          bool keyvalue_x=false)
+{
+    auto left = lo;
+    auto right = hi < 0 ? a.size() : hi;
+    auto kx = keyvalue_x ? x : key(x);
+    while (left + 1 < right) {
+        auto mid = (left + right)/2;
+        auto kn = key(a[mid]);
+        if (kx < kn)
+            right = mid;
+        else
+            left = mid;
+    }
+    return right;
+}
+
+using namespace std;
 typedef llint dtype;
 
 int main(void)
 {
-    CountUp cu;
-    auto dm = defaultmap<long long int,int>(cu);
+    cout << "defaultmap & countup" << endl;
+    auto dm = defaultmap<long long int,int>(CountUp());
     std::cout << dm[5] << std::endl;
     std::cout << dm[3] << std::endl;
     std::cout << dm[10] << std::endl;
     std::cout << dm[3] << std::endl;
 
+    cout << "inv_mod" << endl;
     std::cout << inv_mod<int>(2,2019) << std::endl;
+    std::cout << inv_mod_norec<int>(2,2019) << std::endl;
 
+    cout << "unionfind" << endl;
     UnionFind uf(4);
     uf.merge(0,1);
     uf.merge(2,3);
     uf.merge(0,3);
     std::cout << uf.groups_num() << std::endl;
+
+    cout << "heapq" << endl;
+    heapq<int> hq;
+    hq.heappush(20);
+    hq.heappush(10);
+    hq.heappush(5);
+    hq.heappush(15);
+    cout << hq[0] << endl;
+    cout << hq.heappop() << endl;
+
+    cout << "segtree" << endl;
+    SegmentTree<double> sg(std::vector<double>({10,0,-3,30}));
+    cout << sg.query_index() << endl;
+
+    cout << "getsequence" << endl;
+    auto p = get_sequence(vector<int>({1,1,2,2,2,3,3,3,3,3}));
+    cout << p.first[2] << endl;
+    cout << p.second[2] << endl;
+
+    cout << "divisors" << endl;
+    for (auto j: divisors(36)) {
+        cout << j << endl;
+    }
 
     return 0;
 }
