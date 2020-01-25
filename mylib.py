@@ -8,7 +8,6 @@ inpl = lambda: list(map(int,input().split()))
 class CountUp:
     def __init__(self, start=0):
         self.index = start-1
-
     def __call__(self):
         self.index += 1
         return self.index
@@ -131,7 +130,10 @@ def bisect_left_withkey(a, x, lo=0, hi=None, key=lambda x: x, keyvalue_x=False):
             right = new
         else:
             left = new
-    return right
+    if key(a[left]) == kx:
+        return left
+    else:
+        return right
 
 def bisect_right_withkey(a, x, lo=0, hi=None, key=lambda x: x, keyvalue_x=False):
     left = lo
@@ -145,7 +147,6 @@ def bisect_right_withkey(a, x, lo=0, hi=None, key=lambda x: x, keyvalue_x=False)
         else:
             left = new
     return right
-
 
 from fractions import gcd
 from functools import reduce
@@ -168,7 +169,8 @@ def get_sequence(arr):
     nums = []
     n = 1
     prev = arr[0]
-    for c in arr[1:]:
+    for i in range(1,len(arr)):
+        c = arr[i]
         if c == prev:
             n += 1
         else:
@@ -218,16 +220,13 @@ def factorize(n, P=None):
         power.append(1)
     return factor, power
 
+from math import sqrt, ceil
 def divisors(n, sort=True, reverse=False):
-    sqn = math.sqrt(n)
-    sqn_int = int(sqn)
+    sqn = int(ceil(sqrt(n)))
     div_list = []
-    if sqn == sqn_int:
-        div_list.append(sqn_int)
-        loop = range(1,sqn_int)
-    else:
-        loop = range(1,sqn_int + 1)
-    for i in loop:
+    if sqn*sqn == n:
+        div_list.append(sqn)
+    for i in range(1,sqn):
         if n % i == 0:
             div_list.append(i)
             div_list.append(n//i)
@@ -324,6 +323,8 @@ def inv_mod(a, p=10**9+7):
 def comb_mod(n,k,p):
     ans = 1
     k = min(k,n-k)
+    if k < 0:
+        return 0
     for i in range(k):
         ans = ans * (n-i) * inv_mod(k-i,p) % p
     return ans
@@ -338,7 +339,7 @@ def pow_mod(x, n, p):
     return ans
 
 class SegmentTree:
-    def __init__(self, value, N=0, comp=lambda x,y: x<=y, reverse=False):
+    def __init__(self, value=[], N=0, comp=lambda x,y: x<=y, reverse=False):
         M = max(len(value),N)
         N = 2**(len(bin(M))-3)
         if N < M: N *= 2
@@ -435,6 +436,47 @@ class SegAccumCalc:
                 L += 1
             L >>= 1; R >>= 1
         return s
+
+
+from heapq import heappop, heappush
+from collections import defaultdict
+def dijkstra(start, goal, edges,
+             start_distance=0,
+             plus_func=lambda D,d: D+d):
+    '''
+    goal: int or list or set
+    edges: list or dict
+        edges[x] = (y, distance)
+    '''
+    q = [(start_distance, start)]
+    done = set()
+    if isinstance(goal, int):
+        goal_set = {goal}
+    else:
+        goal_set = set(goal)
+    ret = defaultdict(lambda: None)
+    minimum = defaultdict(lambda: None)
+
+    while q:
+        D, x = heappop(q)
+        if x in done:
+            continue
+        elif x in goal_set:
+            ret[x] = D
+            goal_set.remove(x)
+            if len(goal_set) == 0:
+                return ret
+        done.add(x)
+        for y, d in edges[x]:
+            if not y in done:
+                m = minimum[y]
+                p = plus_func(D,d)
+                if m is None or m > p:
+                    heappush(q, (p, y))
+                    minimum[y] = p
+    return ret
+
+
 
 ## Incomplete Codes... ###
 class LinkedList:
