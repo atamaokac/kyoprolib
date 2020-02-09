@@ -1,3 +1,4 @@
+//#include <bits/stdc++.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -521,6 +522,60 @@ auto bisect_right_withkey(T a, std::vector<T> x, int lo=0, int hi=-1,
     return right;
 }
 
+
+class combinations
+{
+    std::vector<int> c;
+    std::vector<std::pair<int,int>> pool;
+    int n, k;
+public:
+    combinations(int n, int k) : c(0), pool(0), n(n), k(k) {
+    }
+    bool clear() {
+        if (n >= 0 && 0 <= k && k <= n) {
+            c.resize(k);
+            pool.clear();
+            pool.push_back(std::make_pair(-1,-1));
+            return next();
+        } else {
+            return false;
+        }
+    }
+    const std::vector<int>& value() const { return c; }
+    bool next(void) {
+        while (pool.size() > 0) {
+            auto i = pool.back().first;
+            auto j = pool.back().second;
+            pool.pop_back();
+            if (i >= 0) {
+                c[i] = j;
+            }
+            if (i >= k-1) {
+                return true;
+            } else {
+                for (auto m = i+n-k+1; m > j; m--) {
+                    pool.push_back(std::make_pair(i+1,m));
+                }
+            }
+        }
+        return false;
+    }
+
+    class iterator
+    {
+        combinations* body;
+    public:
+        iterator(combinations* body) : body(body) { }
+        const std::vector<int>& operator*() const { return body->value(); }
+        iterator& operator++() { if (!body->next()) { body = nullptr; } return *this; }
+        bool operator!=(const iterator& v) const { return body != v.body; }
+    };
+
+    iterator begin() { if (clear()) return iterator(this); else return iterator(nullptr); }
+    iterator end() const { return iterator(nullptr); }
+};
+
+
 using namespace std;
 typedef llint dtype;
 
@@ -565,6 +620,17 @@ int main(void)
     cout << "divisors" << endl;
     for (auto j: divisors(36)) {
         cout << j << endl;
+    }
+
+    cout << "combinations" << endl;
+    int n = 5;
+    int k = 2;
+    for (auto& c : combinations(n,k)) {
+        loop(i, k) {
+            //cout << "#";
+            cout << c[i];
+        }
+        cout << endl;
     }
 
     return 0;
