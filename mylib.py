@@ -477,6 +477,21 @@ def dijkstra(start, goal, edges,
     return ret
 
 
+def combinations(N,k):
+    if 0 <= k <= N:
+        c = [0]*k
+        pool = [(-1,-1)]
+        while pool:
+            i, n = pool.pop()
+            if i >= 0:
+                c[i] = n
+            if i >= k-1:
+                yield tuple(c)
+            else:
+                for m in range(i+N-k+1,n,-1):
+                    pool.append((i+1, m))
+
+
 
 ## Incomplete Codes... ###
 class LinkedList:
