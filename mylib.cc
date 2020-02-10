@@ -36,7 +36,7 @@ class defaultmap: public std::map<K,V>
 private:
     std::function<V(K)> defaultfunc;
 public:
-    defaultmap(std::function<V(K)> df) { defaultfunc = df; }
+    defaultmap(std::function<V(K)> df) : defaultfunc(df) {}
     auto& operator[](const K& key) {
         auto itr = this->find(key);
         if (itr != this->end())
@@ -50,7 +50,7 @@ class CountUp
 private:
     int index;
 public:
-    CountUp(int start=0) { index = start; }
+    CountUp(int start=0) : index(start) {}
     auto operator()(...) { return index++; }
     auto next() { return index; }
 };
@@ -95,9 +95,8 @@ public:
                 unsigned int N_=0,
                 bool reverse = false,
                 std::function<bool(int,int)> comp = nullptr
-                )
+                ) : data(data)
     {
-        this->data = data;
         if (comp == nullptr) {
             comp = defaultcomp;
         }
@@ -234,12 +233,7 @@ private:
     // P el;
     int gN;
 public:
-    UnionFind(int N) {
-        parent = std::move(P(N,-1));
-        // el = std::move(P(N));
-        // loop(i,N) el[i]=i;
-        gN = N;
-    }
+    UnionFind(int N) : parent(N,-1), gN(N) {}
 
     auto root(int n) {
         if(parent[n] < 0) {
@@ -279,10 +273,7 @@ private:
     T primes_ceil;
     std::vector<T> primes;
 public:
-    Factorizer() {
-        primes_ceil = 5;
-        primes = std::move(std::vector<T>({2,3}));
-    }
+    Factorizer() : primes_ceil(5), primes({2,3}) {}
 
     const auto& find_primes(T pc) {
         if(pc <= primes_ceil)
