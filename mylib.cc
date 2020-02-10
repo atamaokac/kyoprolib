@@ -190,23 +190,25 @@ auto inv_mod_norec(Int a, Int p=1000000007)
 }
 
 template<typename T>
-auto inv_mod_sub(T a, T p) {
-    if(a == 1) {
-        return std::pair<T,T>(1, 0);
-    } else {
-        auto d = p / a;
-        auto r = p % a;
-        auto xy = inv_mod_sub(r, a);
-        auto x = xy.first;
-        auto y = xy.second;
-        return std::pair<T,T>(y-d*x, x);
-    }
-}
-template<typename T>
 auto inv_mod(T a, T p) {
+    struct {
+        auto operator()(T a, T p) {
+            if(a == 1) {
+                return std::pair<T,T>(1, 0);
+            } else {
+                auto d = p / a;
+                auto r = p % a;
+                auto xy = operator()(r, a);
+                auto x = xy.first;
+                auto y = xy.second;
+                return std::pair<T,T>(y-d*x, x);
+            }
+        }
+    } inv_mod_sub;
+
     if(p < 0) p = -p;
     a %= p;
-    auto ans = inv_mod_sub<T>(a, p).first % p;
+    auto ans = inv_mod_sub(a, p).first % p;
     if(ans < 0) ans += p;
     return ans;
 }
