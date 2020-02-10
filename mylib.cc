@@ -576,6 +576,36 @@ public:
     iterator end() const { return iterator(nullptr); }
 };
 
+//template<typename Int>
+class range {
+    typedef int Int;
+    Int start, stop, step;
+public:
+    range(Int start, Int stop, Int step=1) : start(start), stop(stop), step(step) {
+        initialize();
+    }
+    range(Int stop) : start(0), stop(stop), step(1) { initialize(); }
+    void initialize() {
+        auto sign = (step >= 0) ? 1 : -1;
+        stop = start + ((stop-start-sign)/step + 1) * step;
+        if ((stop-start) * step <= 0) stop = start;
+    }
+
+    struct iterator {
+        Int i, step;
+        Int& operator*() { return i; }
+        iterator& operator++() { i += step; return *this; }
+        bool operator!=(const iterator& v) { return i != v.i; }
+    };
+    iterator begin() { return {start, step}; }
+    iterator end()   { return {stop, step}; }
+};
+/* 
+// Example:
+for (auto i : range(10)) {
+    ...
+}
+*/
 
 using namespace std;
 typedef llint dtype;
@@ -632,6 +662,11 @@ int main(void)
             cout << c[i];
         }
         cout << endl;
+    }
+
+    cout << "range" << endl;
+    for (auto i : range(5)) {
+        cout << i << endl;
     }
 
     return 0;
