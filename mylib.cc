@@ -565,6 +565,7 @@ public:
     iterator end() const { return iterator(nullptr); }
 };
 
+// cf.) https://marycore.jp/prog/cpp/custom-iterator-and-range-based-for/
 //template<typename Int>
 class range {
     typedef int Int;
