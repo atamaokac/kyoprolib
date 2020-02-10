@@ -36,23 +36,23 @@ class defaultmap: public std::map<K,V>
 private:
     std::function<V(K)> defaultfunc;
 public:
-    defaultmap(std::function<V(K)> df) { defaultfunc = df; };
+    defaultmap(std::function<V(K)> df) { defaultfunc = df; }
     auto& operator[](const K& key) {
         auto itr = this->find(key);
         if (itr != this->end())
             return itr->second;
         else
             return this->std::map<K,V>::operator[](key)=defaultfunc(key);
-    };
+    }
 };
 class CountUp
 {
 private:
     int index;
 public:
-    CountUp(int start=0) { index = start; };
-    auto operator()(...) { return index++; };
-    auto next() { return index; };
+    CountUp(int start=0) { index = start; }
+    auto operator()(...) { return index++; }
+    auto next() { return index; }
 };
 /* Usage of CountUp:
     auto ui = defaultmap<K, int>(CountUp());
@@ -122,11 +122,9 @@ public:
             auto left_i = node[2*i+1], right_i = node[2*i+2];
             node[i] = this->comp(left_i, right_i) ? left_i : right_i;
         }
-    };
+    }
 
-    const T& at(int i) {
-        return data[i];
-    };
+    const T& at(int i) { return data[i]; }
 
     void update(int n, const T& v) {
         data[n] = v;
@@ -141,9 +139,9 @@ public:
                 node[i] = new_i;
             }
         }
-    };
+    }
 
-    const T& query(int l=0, int r=-1) { return data[query_index(l, r)]; };
+    const T& query(int l=0, int r=-1) { return data[query_index(l, r)]; }
 
     int query_index(int l=0, int r=-1) {
         if (r < 0) r = N;
@@ -161,7 +159,7 @@ public:
             L >>= 1; R >>= 1;
         }
         return s;
-    };
+    }
 };
 
 template<typename Int>
@@ -241,7 +239,7 @@ public:
         // el = std::move(P(N));
         // loop(i,N) el[i]=i;
         gN = N;
-    };
+    }
 
     auto root(int n) {
         if(parent[n] < 0) {
@@ -251,7 +249,7 @@ public:
             parent[n] = m;
             return m;
         }
-    };
+    }
 
     auto merge(int m, int n) {
         auto rm = root(m);
@@ -265,13 +263,13 @@ public:
             gN--;
         }
         return rm;
-    };
+    }
 
-    auto size(int n) { return -parent[root(n)]; };
-    auto connected(int m, int n) { return root(m) == root(n); };
-    auto groups_num() { return gN; };
-    auto elements_num() { return parent.size(); };
-    // const auto& elements() { return el; };
+    auto size(int n) { return -parent[root(n)]; }
+    auto connected(int m, int n) { return root(m) == root(n); }
+    auto groups_num() { return gN; }
+    auto elements_num() { return parent.size(); }
+    // const auto& elements() { return el; }
 };
 
 template<typename T>
@@ -284,7 +282,7 @@ public:
     Factorizer() {
         primes_ceil = 5;
         primes = std::move(std::vector<T>({2,3}));
-    };
+    }
 
     const auto& find_primes(T pc) {
         if(pc <= primes_ceil)
@@ -323,7 +321,7 @@ public:
             }
         }
         return primes;
-    };
+    }
 
     auto operator()(T n) {
         if((primes_ceil-1)*(primes_ceil-1) < n)
@@ -349,7 +347,7 @@ public:
         return std::move(std::pair<std::vector<T>,std::vector<T>>(
                     std::move(factors), std::move(powers)
                 ));
-    };
+    }
 };
 
 
@@ -375,7 +373,7 @@ private:
                 i = m;
             }
         }
-    };
+    }
 
     void up_heapify(std::size_t i) {
         while(i > 0) {
@@ -387,25 +385,25 @@ private:
                 return;
             }
         }
-    };
+    }
 
 public:
     template<typename ...Args>
     heapq(Args ...args) : std::vector<T>(args...) {
         heapify();
-    };
+    }
 
     void heapify() {
         auto first_leaf = this->size()/2;
         for(auto i=first_leaf; i>0; i--) {
             down_heapify(i-1);
         }
-    };
+    }
 
     void heappush(const T& x) {
         this->push_back(x);
         up_heapify(this->size()-1);
-    };
+    }
 
     T heappop() {
         auto ret = std::move(this->front());
@@ -413,14 +411,14 @@ public:
         this->pop_back();
         down_heapify(0);
         return ret;
-    };
+    }
 
     T heappoppush(const T& x) {
         auto ret = std::move(this->front());
         this->front() = x;
         down_heapify(0);
         return ret;        
-    };
+    }
 
     T heappushpop(const T& x) {
         if(x <= this->front()) {
@@ -428,7 +426,7 @@ public:
         } else {
             return heappoppush(x);
         }
-    };
+    }
 };
 
 
