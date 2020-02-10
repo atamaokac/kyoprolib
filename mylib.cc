@@ -531,8 +531,7 @@ class combinations
     std::vector<std::pair<int,int>> pool;
     int n, k;
 public:
-    combinations(int n, int k) : c(0), pool(0), n(n), k(k) {
-    }
+    combinations(int n, int k) : c(0), pool(0), n(n), k(k) {}
     bool clear() {
         if (n >= 0 && 0 <= k && k <= n) {
             c.resize(k);
@@ -544,7 +543,7 @@ public:
         }
     }
     const std::vector<int>& value() const { return c; }
-    bool next(void) {
+    bool next() {
         while (pool.size() > 0) {
             auto i = pool.back().first;
             auto j = pool.back().second;
@@ -567,7 +566,7 @@ public:
     {
         combinations* body;
     public:
-        iterator(combinations* body) : body(body) { }
+        iterator(combinations* body) : body(body) {}
         const std::vector<int>& operator*() const { return body->value(); }
         iterator& operator++() { if (!body->next()) { body = nullptr; } return *this; }
         bool operator!=(const iterator& v) const { return body != v.body; }
