@@ -234,7 +234,7 @@ def inv_mod(a, p=10**9+7, phi=None):
 #   a_inv = inv_mod(a, p, phi)
 ```
 
-###組み合わせ数のmod
+### 組み合わせ数のmod
 
 上の`inv_mod()`（実装はどれでもよい）を使い、${}_nC_k \;\mathrm{mod} \;p$を一度計算するだけならこれだけです：
 
