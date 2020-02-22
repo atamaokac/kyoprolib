@@ -950,15 +950,47 @@ while pool:
         pool.append(c)
 ```
 
+## 組み合わせ列挙 combinations()
+
+$_n C_k$の中身を順に列挙します。
+
+```python
+for c in combinations(n,k):
+    print(c)
+```
+
+のように使用可能。`c` は`k`成分のタプルとなります。各成分の値は`0`から`n-1`です。
+
+実装は以下の通り。元々は「競プロで`yield`を使ってみる」目的で作ったもの。
+
+```python
+def combinations(N,k):
+    if 0 <= k <= N:
+        c = [0]*k
+        pool = [(-1,-1)]
+        while pool:
+            i, n = pool.pop()
+            if i >= 0:
+                c[i] = n
+            if i >= k-1:
+                yield tuple(c)
+            else:
+                for m in range(i+N-k+1,n,-1):
+                    pool.append((i+1, m))
+```
+
 ## おしまい
 
 おしまい。
 
 ## 更新履歴
 - ver 1.0: 2019.06
+
 - ver 1.1: `Counter`を`CountUp`に改称。
-`collections.Counter`と名前が重複するので、`from collections import Counter`と万一同時使用すると事故になる。
+  `collections.Counter`と名前が重複するので、`from collections import Counter`と万一同時使用すると事故になる。
+
 - ver 1.2: `gcd_list()`について注記。
+
 - ver 2.0 (2019.12):
   - 前文を微修正、注意その2を追加
   - 各節に対象となる問題レベルの目安（AtCoderの配点）を追記
@@ -972,3 +1004,7 @@ while pool:
   - グラフ探索と木探索の節を追加
   - ver1.2以後のコンテストから例題を若干追加
   - ライブラリ自体は半年間でほぼ増えていない。無くていいかは別としても、**ABCにはこれくらいで十分**、と考えてよいと思う。
+  
+- ver 2.1 (2020.02):
+
+  `combinations()`の追加、グラフ探索関数のコードへの追加。
