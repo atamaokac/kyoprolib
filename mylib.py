@@ -476,6 +476,90 @@ def dijkstra(start, goal, edges,
                     minimum[y] = p
     return ret
 
+def bellman_ford(start, goal, N, edges,
+                 get_route=False,
+                 negative_loop=None,
+                 start_distance=0,
+                 plus_func=lambda D,d: D+d):
+    '''
+    goal: int or list or set
+    edges: list or dict
+        edges[x] = {(y0, distance0), ...}
+    '''
+    distance = [None]*N
+    predecessor = [None]*N
+    if isinstance(goal, int):
+        goal = [goal]
+    elif isinstance(goal, set):
+        goal = list(goal)
+    M = len(goal)
+    goalable = [[False]*N for _ in range(M)]
+    for m in range(M):
+        goalable[m][goal[m]] = True
+    distance[start] = start_distance
+    for _ in range(N-1):
+        for i in range(N):
+            if distance[i] is None:
+                continue
+            for j, d in edges[i]:
+                for m in range(M):
+                    if goalable[m][j]:
+                        goalable[m][i] = True
+                p = plus_func(distance[i], d)
+                if distance[j] is None or distance[j] > p:
+                    distance[j] = p
+                    predecessor[j] = i
+
+    goal_valid = [True]*M
+    for i in range(N):
+        if distance[i] is None:
+            continue
+        for j, d in edges[i]:
+            if distance[j] is not None and plus_func(distance[i], d) < distance[j]:
+                # Negative loop detected.
+                for m in range(M):
+                    if goal_valid[m] and goalable[m][i]:
+                        distance[goal[m]] = negative_loop
+                        goal_valid[m] = False
+    if get_route:
+        return distance, predecessor
+    else:
+        return distance
+
+# scipy.sparse.csgraph.floyd_warshall()
+def warshall_floyd(N, edges,
+                   nopath=None,
+                   get_route=False,
+                   start_distance=0,
+                   plus_func=lambda D,d: D+d):
+    '''
+    edges: list of set
+        edges = [{(y0, distance0), (y1, distance1), ...}, ...]
+    '''
+    ret = [[nopath]*N for _ in range(N)]
+    predecessor = [[None]*N for _ in range(N)]
+    for i in range(N):
+        ret[i][i] = start_distance
+    for i in range(N):
+        for j, d in edges[i]:
+            if 0 <= j < N:
+                ret[i][j] = plus_func(start_distance, d)
+                predecessor[i][j] = i
+    for k in range(N):
+        for i in range(N):
+            if i == k: continue
+            for j in range(N):
+                if j == k or ret[i][k] == nopath or ret[k][j] == nopath:
+                    continue
+                d = plus_func(ret[i][k], ret[k][j])
+                if ret[i][j] == nopath or d < ret[i][j]:
+                    ret[i][j] = d
+                    predecessor[i][j] = predecessor[k][j]
+    if get_route:
+        return ret, predecessor
+    else:
+        return ret
+
 
 def combinations(N,k):
     if 0 <= k <= N:
