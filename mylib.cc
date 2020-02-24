@@ -609,6 +609,60 @@ int bitcount(long int a)
     return a;
 }
 
+template<typename T>
+bool operator<(const std::vector<T>& a, const std::vector<T>& b)
+{
+    auto N = min(a.size(),b.size());
+    for (auto i=0; i < N; ++i) {
+        if (a[i] >= b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+template<typename T>
+bool operator<=(const std::vector<T>& a, const std::vector<T>& b)
+{
+    auto N = min(a.size(),b.size());
+    for (auto i=0; i < N; ++i) {
+        if (a[i] > b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+template<typename T>
+bool operator>(const std::vector<T>& a, const std::vector<T>& b)
+{
+    return !operator<=(a,b);
+}
+template<typename T>
+bool operator>=(const std::vector<T>& a, const std::vector<T>& b)
+{
+    return !operator<(a,b);
+}
+template<typename T>
+std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
+{
+    auto N = min(a.size(), b.size());
+    std::vector<T> ret(N);
+    for (auto i=0; i < N; ++i) {
+        ret[i] = a[i] + b[i];
+    }
+    return ret;
+}
+template<typename T, typename K>
+std::vector<T> operator*(const std::vector<T>& a, K c)
+{
+    auto N = a.size();
+    std::vector<T> ret(N);
+    for (auto i=0; i < N; ++i) {
+        ret[i] = a[i] * c;
+    }
+    return ret;
+}
+
+
 using namespace std;
 typedef llint dtype;
 
@@ -670,6 +724,9 @@ int main(void)
     for (auto i : range(5)) {
         cout << i << endl;
     }
+
+    cout << "bitcount" << endl;
+    cout << bitcount(0xFF0FF000) << endl;
 
     return 0;
 }
