@@ -83,12 +83,10 @@ std::ostream& operator<<(std::ostream& cout, const std::pair<T1,T2>& data)
 template<typename T>
 std::ostream& operator<<(std::ostream& cout, const std::vector<T>& data)
 {
-    cout //<< typeid(data).name() 
-         << "[";
+    cout << "[";
     if (data.size() == 0) {}
-    else if (data.size() == 1) {
-        cout << data[0];
-    } else {
+    else if (data.size() == 1) { cout << data[0]; } 
+    else {
         cout << data[0];
         for (auto itr=data.begin()+1; itr!=data.end(); ++itr) {
             cout << ", " << *itr;
