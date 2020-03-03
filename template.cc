@@ -10,9 +10,17 @@ template<typename T>
 auto sum_all(const T& v) { auto z = v[0]; z = 0;
     return std::accumulate(v.begin(),v.end(),z); }
 template<typename T>
-auto input(int N) {
-    std::vector<T> v(N);
-    loop(i,N) std::cin >> v[i];
+auto input( std::size_t N,
+            const std::vector<T>& head={},
+            const std::vector<T>& tail={}) {
+    auto s = head.size();
+    auto t = tail.size();
+    std::vector<T> v;
+    v.reserve(s+N+t);
+    v.insert(v.end(), head.begin(), head.end());
+    v.resize(s+N);
+    loop(i,N) std::cin >> v[s+i];
+    v.insert(v.end(), tail.begin(), tail.end());
     return std::move(v);
 }
 class range {
