@@ -76,85 +76,76 @@ template<typename T>
 class SegmentTree
 {
 private:
-    unsigned int N;
+    int N;
+    T nullret = T(-1);
     std::vector<int> node;
     std::vector<T> data;
-    std::function<bool(int,int)> comp;
-    const std::function<bool(int,int)> defaultcomp = [this](int i, int j) {
-        if (j < 0) {
-            return true;
-        } else if (i < 0) {
-            return false;
-        } else {
-            return data[i] < data[j];
-        } 
-    };
+    std::function<bool(T,T)> lessthan;
+    bool reverse;
 
 public:
-    SegmentTree(const std::vector<T>& data,
-                unsigned int N_=0,
+    bool comp(int i, int j) {
+        if (j < 0) { return true; }
+        else if (i < 0) { return false; } 
+        else {
+            auto ret = lessthan(data[i], data[j]);
+            if (reverse) { ret = !ret; }
+            return ret;
+        }
+    }
+    SegmentTree(std::size_t N_,
+                const std::vector<T>& data_ = std::vector<T>(0),
                 bool reverse = false,
-                std::function<bool(int,int)> comp = nullptr
-                ) : data(data)
+                std::function<bool(T,T)> lessthan = [](T a, T b){ return a <= b; }
+                ) : data(data_), node(0), lessthan(lessthan), reverse(reverse)
     {
-        if (comp == nullptr) {
-            comp = defaultcomp;
-        }
-        if (reverse) {
-            this->comp = [comp] (int i, int j) { return comp(j,i); };
-        } else {
-            this->comp = [comp] (int i, int j) { return comp(i,j); };
-        }
-        
-        unsigned int M = std::max((unsigned int)(data.size()), N_);
+        int M = std::max(data.size(), N_);
         N = 1 << std::max(bitlen(M)-1, 0);
         if (N < M) N *= 2;
-        node.resize(2*N-1);
-        for (auto i=0; i<data.size(); i++) {
-            node[N-1+i] = i;
-        }
-        for (auto i=data.size(); i<N; i++) {
-            node[N-1+i] = -1;
-        }
-
-        for (int i=N-2; i>=0; i--) {
+        node.resize(2*N-1,-1);
+        for (auto i=0; i<data.size(); i++) { node[N-1+i] = i; }
+        if (data.size() < N) { data.resize(N,T(0)); }
+        for (auto i=N-2; i>=0; i--) {
             auto left_i = node[2*i+1], right_i = node[2*i+2];
             node[i] = this->comp(left_i, right_i) ? left_i : right_i;
         }
     }
-
+    void setnull(const T& t) { return nullret = t; }
     const T& at(int i) { return data[i]; }
-
     void update(int n, const T& v) {
         data[n] = v;
-        int i = N + n - 1;
+        int i = N - 1 + n;
+        node[i] = n;
         while (i > 0) {
             i = (i-1)/2;
-            int left_i, right_i = node[2*i+1], node[2*i+2];
+            auto left_i = node[2*i+1], right_i = node[2*i+2];
             auto new_i = comp(left_i, right_i) ? left_i : right_i;
-            if (new_i == node[i] and new_i != n) {
-                break;
-            } else {
-                node[i] = new_i;
-            }
+            if (new_i == node[i] && new_i != n) { break; } 
+            else { node[i] = new_i; }
         }
     }
-
-    const T& query(int l=0, int r=-1) { return data[query_index(l, r)]; }
-
+    void emptify(int n) {
+        int i = N - 1 + n;
+        node[i] = -1;
+        while (i > 0) {
+            i = (i-1)/2;
+            auto left_i = node[2*i+1], right_i = node[2*i+2];
+            auto new_i = comp(left_i, right_i) ? left_i : right_i;
+            if (new_i == node[i] && new_i != n) { break; }
+            else { node[i] = new_i; }
+        }
+    }
+    const T& query(int l=0, int r=-1) {
+        auto s = query_index(l, r);
+        if (s < 0) { return nullret; } else { return data[s]; }
+    }
     int query_index(int l=0, int r=-1) {
         if (r < 0) r = N;
         int L = l + N, R = r + N;
         int s = -1;
         while (L < R) {
-            if (R & 1) {
-                R -= 1;
-                if (comp(node[R-1], s)) s = node[R-1];
-            }
-            if (L & 1) {
-                if (comp(node[L-1], s)) s = node[L-1];
-                L += 1;
-            }
+            if (R & 1) { R--; if (comp(node[R-1], s)) s=node[R-1]; }
+            if (L & 1) { if (comp(node[L-1], s)) s=node[L-1]; L++; }
             L >>= 1; R >>= 1;
         }
         return s;
