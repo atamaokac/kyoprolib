@@ -626,6 +626,27 @@ def combinations(N,k):
                 for m in range(i+N-k+1,n,-1):
                     pool.append((i+1, m))
 
+def permutations(N, k=-1):
+    if k < 0:
+        k = N
+    if 0 <= k <= N:
+        c = [0]*k
+        pool = [(-1,-1)]
+        S = set(range(N))
+        d = -1
+        while pool:
+            i, n = pool.pop()
+            if i >= 0:
+                if i <= d:
+                    S |= set(c[i:d+1])
+                d = i
+                c[d] = n
+                S.remove(n)
+            if i >= k-1:
+                yield tuple(c)
+            else:
+                for m in S:
+                    pool.append((d+1, m))
 
 
 ## Incomplete Codes... ###
