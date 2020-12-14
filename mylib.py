@@ -407,6 +407,12 @@ class SegmentTree:
             left_v, right_v = self.value[left_i], self.value[right_i]
             self.node[i] = left_i if self.comp(left_v, right_v) else right_i
 
+    def __setitem__(self, n, v):
+        self.update(n,v)
+
+    def __getitem__(self, n):
+        return self.at(n)
+
     def update(self, n, v):
         self.value[n] = v
         i = (self.N-1) + n
@@ -458,6 +464,12 @@ class SegAccumCalc:
         for i in range(N-2,-1,-1):
             left, right = self.node[2*i+1], self.node[2*i+2]
             self.node[i] = self.calc(left, right)
+
+    def __setitem__(self, n, v):
+        self.update(n,v)
+
+    def __getitem__(self, n):
+        return self.at(n)
 
     def update(self, n, v):
         i = (self.N-1) + n
