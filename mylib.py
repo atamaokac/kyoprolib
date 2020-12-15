@@ -118,6 +118,57 @@ class ParityUnionFind:
         rn, pn = self.root(n)
         return rm == rn and pm != pn
 
+
+class MinMaxUnionFind:
+    def __init__(self, N):
+        self.parent = [-1]*int(N)
+        self.grouprange = [(i,i) for i in range(N)]
+
+    def root(self, n):
+        stack = []
+        while n >= 0:
+            stack.append(n)
+            n = self.parent[n]
+        m = stack.pop()
+        while stack:
+            self.parent[stack.pop()] = m
+        return m
+
+    def merge(self, m, n):
+        rm = self.root(m)
+        rn = self.root(n)
+        if rm != rn:
+            if -self.parent[rm] < -self.parent[rn]:
+                rm, rn = rn, rm
+            self.parent[rm] += self.parent[rn]
+            self.parent[rn] = rm
+            self.grouprange[rm] = (
+                min(self.grouprange[rm][0],self.grouprange[rn][0]),
+                max(self.grouprange[rm][1],self.grouprange[rn][1]),
+            )
+
+    def min(self, n):
+        return self.grouprange[self.root(n)][0]
+    
+    def max(self, n):
+        return self.grouprange[self.root(n)][1]
+
+    def size(self, n):
+        return -self.parent[self.root(n)]
+    
+    def connected(self, m, n):
+        return self.root(m) == self.root(n)
+
+    def groups(self):
+        return list(filter(lambda i: self.parent[i]<0, range(len(self.parent))))
+ 
+    def groups_num(self):
+        return len(self.groups())
+
+    def elements(self):
+        return range(len(self.parent))
+
+
 # bisect functions with key
 def bisect_left_withkey(a, x, lo=0, hi=None, key=lambda x: x, keyvalue_x=False):
     left = lo
