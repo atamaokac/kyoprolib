@@ -492,7 +492,7 @@ class SegmentTree:
         return s
 
 class SegAccumCalc:
-    def __init__(self, value, N=0, calc=lambda x,y: x+y):
+    def __init__(self, value, N=0, calc=lambda x,y: x+y, e=0):
         M = max(len(value),N)
         N = 2**(len(bin(M))-3)
         if N < M: N *= 2
@@ -501,6 +501,7 @@ class SegAccumCalc:
         for i, v in enumerate(value):
             self.node[i+N-1] = v
         self.calc = lambda x, y: x if y is None else y if x is None else calc(x,y)
+        self.e = e
         for i in range(N-2,-1,-1):
             left, right = self.node[2*i+1], self.node[2*i+2]
             self.node[i] = self.calc(left, right)
@@ -529,7 +530,7 @@ class SegAccumCalc:
     def query(self, l=0, r=-1):
         if r < 0: r = self.N
         L = l + self.N; R = r + self.N
-        s = None
+        s = self.e
         while L < R:
             if R & 1:
                 R -= 1
