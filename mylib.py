@@ -5,6 +5,17 @@ import sys
 input = lambda: sys.stdin.readline().rstrip()
 inpl = lambda: list(map(int,input().split()))
 
+import heapq
+from heapq import heappush,heappop,heapify,heappushpop,_heappop_max,_heapify_max
+def _heappush_max(heap,item):
+    heap.append(item)
+    heapq._siftdown_max(heap, 0, len(heap)-1)
+def _heappushpop_max(heap, item):
+    if heap and item < heap[0]:
+        item, heap[0] = heap[0], item
+        heapq._siftup_max(heap, 0)
+    return item
+
 class CountUp:
     def __init__(self, start=0):
         self.index = start-1
