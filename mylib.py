@@ -405,6 +405,30 @@ def pow_mod(x, n, p):
         x = x * x % p
     return ans
 
+class ModComb:
+    def __init__(self, mod=10**9 + 7, n=0):
+        self.mod = mod
+        self.fact = [1]
+        self.inv_fact = [1]
+        self.make_memory(n)
+    
+    def make_memory(self, n):
+        m = len(self.fact)
+        if n >= m:
+            for i in range(m, n+1):
+                self.fact.append(self.fact[-1]*i % self.mod)
+            self.inv_fact.extend([1]*(n+1-m))
+            self.inv_fact[n] = inv_mod(self.fact[n], self.mod)
+            for i in range(n-1,m-1,-1):
+                self.inv_fact[i] = self.inv_fact[i+1]*(i+1) % self.mod
+
+    def __call__(self, n, k):
+        if not (n > 0 and 0 <= k <= n):
+            return 0
+        else:
+            self.make_memory(n)
+            return self.fact[n] * self.inv_fact[k] * self.inv_fact[n-k] % self.mod
+
 class SegmentTree:
     def __init__(self, value=[], N=0, comp=lambda x,y: x<=y, reverse=False):
         M = max(len(value),N)
