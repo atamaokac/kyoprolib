@@ -31,6 +31,7 @@ class UnionFind:
             self.parent = defaultdict(lambda: -1)
         else:
             self.parent = [-1]*int(N)
+        self.mgn = 0
 
     def root_rec(self, n):
         if self.parent[n] < 0:
@@ -58,6 +59,7 @@ class UnionFind:
                 rm, rn = rn, rm
             self.parent[rm] += self.parent[rn]
             self.parent[rn] = rm
+            self.mgn += 1
 
     def size(self, n):
         return -self.parent[self.root(n)]
@@ -72,7 +74,10 @@ class UnionFind:
             return list(filter(lambda i: self.parent[i]<0, self.parent.keys()))
  
     def groups_num(self):
-        return len(self.groups())
+        if isinstance(self.parent,list):
+            return len(self.parent) - self.mgn
+        else:
+            return len(self.parent.keys()) - self.mgn
 
     def elements(self):
         if isinstance(self.parent,list):
