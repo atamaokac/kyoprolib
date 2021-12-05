@@ -703,6 +703,80 @@ def permutations(N, k=-1):
                     pool.append((d+1, m))
 
 
+from collections import deque
+FORWARD, BACKWARD = 0, 1
+class Tree:
+    def __init__(self, N, edges, oneindex=True, root=0):
+        self.N = int(N)
+        self.graph = [set() for _ in range(N)]
+        for e in edges:
+            a, b = e[:2]
+            if oneindex:
+                a -= 1
+                b -= 1
+            self.graph[a].add(b)
+            self.graph[b].add(a)
+        self.setroot(root)
+        self.parent = self.depth = None
+
+    def setroot(self, root=None):
+        if root is not None:
+            self.root = root
+
+    def dfs(self, back=False):
+        self.parent = [-1]*self.N
+        self.depth = [-1]*self.N
+        pool = [(self.root, FORWARD)]
+        d = 0
+        while pool:
+            x, s = pool.pop()
+            if s == FORWARD:
+                self.depth[x] = d
+                d += 1
+                if back:
+                    pool.append((x, BACKWARD))
+                for c in self.graph[x]:
+                    if c != self.parent[x]:
+                        self.parent[c] = x
+                        pool.append((c, FORWARD))
+            else:
+                d -= 1
+            if back:
+                yield (x, s)
+            else:
+                yield x
+
+    def bfs(self):
+        self.parent = [-1]*self.N
+        self.depth = [-1]*self.N
+        d = 0
+        NEXTDEPTH = -1
+        pool = deque([self.root, NEXTDEPTH])
+        while pool:
+            x = pool.popleft()
+            if x == NEXTDEPTH and pool:
+                pool.append(NEXTDEPTH)
+                d += 1
+                continue
+            self.depth[x] = d
+            for c in self.graph[x]:
+                if c != self.parent[x]:
+                    self.parent[c] = x
+                    pool.append(c)
+            yield x
+
+    def eulertour(self):
+        self.eulertour_order = []
+        self.eulertour_left = [-1]*self.N
+        self.eulertour_right = [-1]*self.N
+        for x, s in self.dfs(back=True):
+            if s == FORWARD:
+                self.eulertour_left[x] = len(self.eulertour_order)
+            else:
+                self.eulertour_right[x] = len(self.eulertour_order)
+            self.eulertour_order.append(x)
+
+
 ## Incomplete Codes... ###
 class LinkedList:
     def __init__(self, record, next=None):
