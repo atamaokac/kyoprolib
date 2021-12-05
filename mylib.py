@@ -717,15 +717,14 @@ class Tree:
             self.graph[a].add(b)
             self.graph[b].add(a)
         self.setroot(root)
-        self.parent = self.depth = None
 
-    def setroot(self, root=None):
-        if root is not None:
-            self.root = root
-
-    def dfs(self, back=False):
+    def setroot(self, root=0):
+        self.root = root
         self.parent = [-1]*self.N
         self.depth = [-1]*self.N
+
+    def dfs(self, back=False):
+        self.parent[self.root] = -1
         pool = [(self.root, FORWARD)]
         d = 0
         while pool:
@@ -747,8 +746,7 @@ class Tree:
                 yield x
 
     def bfs(self):
-        self.parent = [-1]*self.N
-        self.depth = [-1]*self.N
+        self.parent[self.root] = -1
         d = 0
         NEXTDEPTH = -1
         pool = deque([self.root, NEXTDEPTH])
@@ -765,16 +763,41 @@ class Tree:
                     pool.append(c)
             yield x
 
-    def eulertour(self):
-        self.eulertour_order = []
-        self.eulertour_left = [-1]*self.N
-        self.eulertour_right = [-1]*self.N
+    def eulertour(self, mindepth=False):
+        self.euler_order = []
+        self.euler_left = [-1]*self.N
+        self.euler_right = [-1]*self.N
         for x, s in self.dfs(back=True):
             if s == FORWARD:
-                self.eulertour_left[x] = len(self.eulertour_order)
+                self.euler_left[x] = len(self.euler_order)
+                self.euler_order.append(x)
             else:
-                self.eulertour_right[x] = len(self.eulertour_order)
-            self.eulertour_order.append(x)
+                self.euler_right[x] = len(self.euler_order)
+                self.euler_order.append(-x)
+        if mindepth:
+            self.euler_mindepth = SegAccumCalc(
+                self.euler_order,
+                calc=lambda i,j: i if self.depth[abs(i)] <= self.depth[abs(j)] else j,
+                e = None,
+                )
+
+    def is_directline(self, a, b):
+        if (self.euler_left[a] <= self.euler_left[b]
+            and self.euler_right[b] <= self.euler_right[a]):
+            return True
+        else:
+            return False
+
+    def lca(self, a, b):
+        if a == b:
+            return a
+        if self.euler_left[a] > self.euler_left[b]:
+            a, b = b, a
+        if self.is_directline(a, b):
+            return a
+        else:
+            k = self.euler_mindepth.query(self.euler_right[a], self.euler_left[b]+1)
+            return self.parent[abs(k)]
 
 
 ## Incomplete Codes... ###
