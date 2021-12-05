@@ -4,6 +4,7 @@ import bisect
 import sys
 input = lambda: sys.stdin.readline().rstrip()
 inpl = lambda: list(map(int,input().split()))
+inplall = lambda: list(map(lambda x: list(map(int,x.split())), sys.stdin.readlines()))
 
 import heapq
 from heapq import heappush,heappop,heapify,heappushpop,_heappop_max,_heapify_max
