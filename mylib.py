@@ -711,11 +711,12 @@ class Tree:
         self.graph = [set() for _ in range(N)]
         for e in edges:
             a, b = e[:2]
+            w = 1 if len(e) <= 2 else e[2]
             if oneindex:
                 a -= 1
                 b -= 1
-            self.graph[a].add(b)
-            self.graph[b].add(a)
+            self.graph[a].add((b,w))
+            self.graph[b].add((a,w))
         self.setroot(root)
 
     def setroot(self, root=0):
@@ -734,7 +735,7 @@ class Tree:
                 d += 1
                 if back:
                     pool.append((x, BACKWARD))
-                for c in self.graph[x]:
+                for c, _ in self.graph[x]:
                     if c != self.parent[x]:
                         self.parent[c] = x
                         pool.append((c, FORWARD))
@@ -757,7 +758,7 @@ class Tree:
                 d += 1
                 continue
             self.depth[x] = d
-            for c in self.graph[x]:
+            for c, _ in self.graph[x]:
                 if c != self.parent[x]:
                     self.parent[c] = x
                     pool.append(c)
