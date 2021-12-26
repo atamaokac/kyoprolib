@@ -543,127 +543,7 @@ class SegAccumCalc:
         return s
 
 
-from heapq import heappop, heappush
-from collections import defaultdict
-def dijkstra(start, goal, edges,
-             start_distance=0,
-             plus_func=lambda D,d: D+d):
-    '''
-    goal: int or list or set
-    edges: list or dict
-        edges[x] = (y, distance)
-    '''
-    q = [(start_distance, start)]
-    done = set()
-    if isinstance(goal, int):
-        goal_set = {goal}
-    else:
-        goal_set = set(goal)
-    ret = defaultdict(lambda: None)
-    minimum = defaultdict(lambda: None)
 
-    while q:
-        D, x = heappop(q)
-        if x in done:
-            continue
-        elif x in goal_set:
-            ret[x] = D
-            goal_set.remove(x)
-            if len(goal_set) == 0:
-                return ret
-        done.add(x)
-        for y, d in edges[x]:
-            if not y in done:
-                m = minimum[y]
-                p = plus_func(D,d)
-                if m is None or m > p:
-                    heappush(q, (p, y))
-                    minimum[y] = p
-    return ret
-
-def bellman_ford(start, goal, N, edges,
-                 get_route=False,
-                 negative_loop=None,
-                 start_distance=0,
-                 plus_func=lambda D,d: D+d):
-    '''
-    goal: int or list or set
-    edges: list or dict
-        edges[x] = {(y0, distance0), ...}
-    '''
-    distance = [None]*N
-    predecessor = [None]*N
-    if isinstance(goal, int):
-        goal = [goal]
-    elif isinstance(goal, set):
-        goal = list(goal)
-    M = len(goal)
-    goalable = [[False]*N for _ in range(M)]
-    for m in range(M):
-        goalable[m][goal[m]] = True
-    distance[start] = start_distance
-    for _ in range(N-1):
-        for i in range(N):
-            if distance[i] is None:
-                continue
-            for j, d in edges[i]:
-                for m in range(M):
-                    if goalable[m][j]:
-                        goalable[m][i] = True
-                p = plus_func(distance[i], d)
-                if distance[j] is None or distance[j] > p:
-                    distance[j] = p
-                    predecessor[j] = i
-
-    goal_valid = [True]*M
-    for i in range(N):
-        if distance[i] is None:
-            continue
-        for j, d in edges[i]:
-            if distance[j] is not None and plus_func(distance[i], d) < distance[j]:
-                # Negative loop detected.
-                for m in range(M):
-                    if goal_valid[m] and goalable[m][i]:
-                        distance[goal[m]] = negative_loop
-                        goal_valid[m] = False
-    if get_route:
-        return distance, predecessor
-    else:
-        return distance
-
-# scipy.sparse.csgraph.floyd_warshall()
-def warshall_floyd(N, edges,
-                   nopath=None,
-                   get_route=False,
-                   start_distance=0,
-                   plus_func=lambda D,d: D+d):
-    '''
-    edges: list of set
-        edges = [{(y0, distance0), (y1, distance1), ...}, ...]
-    '''
-    ret = [[nopath]*N for _ in range(N)]
-    predecessor = [[None]*N for _ in range(N)]
-    for i in range(N):
-        ret[i][i] = start_distance
-    for i in range(N):
-        for j, d in edges[i]:
-            if 0 <= j < N:
-                ret[i][j] = plus_func(start_distance, d)
-                predecessor[i][j] = i
-    for k in range(N):
-        for i in range(N):
-            if i == k: continue
-            for j in range(N):
-                if j == k or ret[i][k] == nopath or ret[k][j] == nopath:
-                    continue
-                d = plus_func(ret[i][k], ret[k][j])
-                if ret[i][j] == nopath or d < ret[i][j]:
-                    ret[i][j] = d
-                    predecessor[i][j] = predecessor[k][j]
-    if get_route:
-        return ret, predecessor
-    else:
-        return ret
 
 
 def combinations(N,k):
@@ -703,79 +583,248 @@ def permutations(N, k=-1):
                     pool.append((d+1, m))
 
 
-from collections import deque
-FORWARD, BACKWARD = 0, 1
-class Tree:
-    def __init__(self, N, edges, oneindex=True, root=0):
+from collections import deque, defaultdict
+from heapq import heappop, heappush
+class Graph:
+    FORWARD, BACKWARD = 0, 1
+    class Links:
+        def __init__(self):
+            pass
+        
+        def __call__(self, i):
+            return set()
+
+    def __init__(self, N, edges, weighted=False, static=False, oneindex=True, bidirectional=True, root=0):
         self.N = int(N)
-        self.graph = [set() for _ in range(N)]
-        for e in edges:
-            a, b = e[:2]
-            w = 1 if len(e) <= 2 else e[2]
-            if oneindex:
-                a -= 1
-                b -= 1
-            self.graph[a].add((b,w))
-            self.graph[b].add((a,w))
+        self.weighted = weighted
+        if isinstance(edges, Graph.Links):
+            if static and isinstance(self.N, int):
+                self.graph = [
+                    {c-1 for c in edges(i)} if oneindex else edges(i)
+                    for i in range(N)
+                ]
+                self.links = lambda i: self.graph[i]
+            else:
+                self.links = edges
+        else:
+            self.graph = [set() for _ in range(N)]
+            for e in edges:
+                if self.weighted:
+                    a, b, w = e[:3]
+                    if oneindex:
+                        a -= 1
+                        b -= 1
+                    self.graph[a].add((b,w))
+                    if bidirectional:   self.graph[b].add((a,w))
+                else:
+                    a, b = e[:2]
+                    if oneindex:
+                        a -= 1
+                        b -= 1
+                    self.graph[a].add(b)
+                    if bidirectional:   self.graph[b].add(a)
+            self.links = lambda i: self.graph[i]
         self.setroot(root)
 
-    def setroot(self, root=0):
+    def setroot(self, root=0, reset=True):
         self.root = root
-        self.parent = [-1]*self.N
-        self.depth = [-1]*self.N
+        if reset:
+            self.parent = defaultdict(lambda: None)
+            self.depth = defaultdict(lambda: -1)
 
     def dfs(self, back=False):
-        self.parent[self.root] = -1
-        pool = [(self.root, FORWARD)]
         d = 0
+        visited = set()
+        pool = [(self.root, Graph.FORWARD)]
         while pool:
             x, s = pool.pop()
-            if s == FORWARD:
+            if s == Graph.FORWARD:
+                if x in visited:  continue
+                else:   visited.add(x)
                 self.depth[x] = d
                 d += 1
-                if back:
-                    pool.append((x, BACKWARD))
-                for c, _ in self.graph[x]:
-                    if c != self.parent[x]:
+                if back:    pool.append((x, Graph.BACKWARD))
+                for cw in self.links(x):
+                    if self.weighted:   c = cw[0]
+                    else:   c = cw
+                    if c != self.parent[x] and not visited[c]:
                         self.parent[c] = x
-                        pool.append((c, FORWARD))
+                        pool.append((c, Graph.FORWARD))
             else:
                 d -= 1
-            if back:
-                yield (x, s)
-            else:
-                yield x
+                visited.discard(x)
+            if back:    yield (x, s)
+            else:   yield x
 
     def bfs(self):
-        self.parent[self.root] = -1
         d = 0
-        NEXTDEPTH = -1
+        visited = set()
+        NEXTDEPTH = None
         pool = deque([self.root, NEXTDEPTH])
         while pool:
             x = pool.popleft()
-            if x == NEXTDEPTH and pool:
-                pool.append(NEXTDEPTH)
-                d += 1
-                continue
+            if x == NEXTDEPTH:
+                if pool:
+                    pool.append(NEXTDEPTH)
+                    d += 1
+                    continue
+                else:
+                    break
             self.depth[x] = d
-            for c, _ in self.graph[x]:
-                if c != self.parent[x]:
+            if x in visited:  continue
+            else:   visited.add(x)
+            for cw in self.links(x):
+                if self.weighted: c = cw[0]
+                else:   c = cw
+                if c != self.parent[x] and c not in visited:
                     self.parent[c] = x
                     pool.append(c)
             yield x
 
-    def eulertour(self, mindepth=False):
+    def dijkstra(self,
+        *goals,
+        distance0=0,
+        plus=lambda D,d: D+d,
+    ):
+        goal_set = set(goals)
+        ret = defaultdict(lambda: None)
+        minimum = dict()
+        pool = [(distance0, self.root)]
+        visited = set()
+
+        while pool:
+            D, x = heappop(pool)
+            if x in visited:
+                continue
+            elif x in goal_set:
+                ret[x] = D
+                goal_set.remove(x)
+                if len(goal_set) == 0:
+                    break
+            visited.add(x)
+            for yd in self.links(x):
+                if self.weighted: y, d = yd
+                else:   y, d = yd, 1
+                if y not in visited:
+                    p = plus(D, d)
+                    if y not in minimum or p < minimum[y]:
+                        heappush(pool, (p, y))
+                        minimum[y] = p
+        return ret
+
+    def bellman_ford(self,
+        *goals,
+        get_route=False,
+        negative_loop=None,
+        distance0=0,
+        plus=lambda D,d: D+d,
+    ):
+        distance = [None]*self.N
+        predecessor = [None]*self.N
+        M = len(goals)
+        goalable = [[False]*self.N for _ in range(M)]
+        for m in range(M):
+            goalable[m][goals[m]] = True
+        distance[self.root] = distance0
+        for _ in range(self.N-1):
+            for i in range(self.N):
+                if distance[i] is None:
+                    continue
+                for j, d in self.links(i):
+                    for m in range(M):
+                        if goalable[m][j]:
+                            goalable[m][i] = True
+                    p = plus(distance[i], d)
+                    if distance[j] is None or distance[j] > p:
+                        distance[j] = p
+                        predecessor[j] = i
+
+        goal_valid = [True]*M
+        for i in range(self.N):
+            if distance[i] is None:
+                continue
+            for jd in self.links(i):
+                if self.weighted:   j, d = jd
+                else:   j, d = jd, 1
+                if distance[j] is not None and plus(distance[i], d) < distance[j]:
+                    # Negative loop detected.
+                    for m in range(M):
+                        if goal_valid[m] and goalable[m][i]:
+                            distance[goals[m]] = negative_loop
+                            goal_valid[m] = False
+        if get_route:
+            return distance, predecessor
+        else:
+            return distance
+
+    # scipy.sparse.csgraph.floyd_warshall()
+    def warshall_floyd(self,
+        nopath=None,
+        get_route=False,
+        distance0=0,
+        plus=lambda D,d: D+d,
+    ):
+        ret = [[nopath]*self.N for _ in range(self.N)]
+        predecessor = [[None]*self.N for _ in range(self.N)]
+        for i in range(self.N):
+            ret[i][i] = distance0
+        for i in range(self.N):
+            for jd in self.links(i):
+                if self.weighted:   j, d = jd
+                else:   j, d = jd, 1
+                if 0 <= j < self.N:
+                    ret[i][j] = plus(distance0, d)
+                    predecessor[i][j] = i
+        for k in range(self.N):
+            for i in range(self.N):
+                if i == k: continue
+                for j in range(self.N):
+                    if j == k or ret[i][k] == nopath or ret[k][j] == nopath:
+                        continue
+                    d = plus(ret[i][k], ret[k][j])
+                    if ret[i][j] == nopath or d < ret[i][j]:
+                        ret[i][j] = d
+                        predecessor[i][j] = predecessor[k][j]
+        if get_route:
+            return ret, predecessor
+        else:
+            return ret
+
+
+class BoardMapLinks(Graph.Links):
+    def __init__(self, H, W, C, bidirectional=False, spaces='.'):
+        self.H, self.W = H, W
+        self.C = C
+        self.bidirectional = bidirectional
+        self.spaces = set(spaces)
+    def n2hw(self, n):
+        return n // self.W, n % self.W
+    def hw2n(self, h, w):
+        return h*self.W + w
+    def __call__(self, i):
+        h, w = self.n2hw(i)
+        return {
+            self.hw2n(nh, nw)
+            for nh, nw in (
+                [(h+1,w), (h-1,w), (h,w+1), (h,w-1)] if self.bidirectional else [(h+1,w), (h,w+1)]
+            )
+            if 0<=nh<self.H and 0<=nw<self.W and self.C[nh][nw] in self.spaces
+        } if 0<=h<self.H and 0<=w<self.W and self.C[h][w] in self.spaces else set()
+
+
+class Tree(Graph):
+    def eulertour(self, get_euler_mindepth=False):
         self.euler_order = []
-        self.euler_left = [-1]*self.N
-        self.euler_right = [-1]*self.N
+        self.euler_left = dict()
+        self.euler_right = dict()
         for x, s in self.dfs(back=True):
-            if s == FORWARD:
+            if s == Graph.FORWARD:
                 self.euler_left[x] = len(self.euler_order)
                 self.euler_order.append(x)
             else:
                 self.euler_right[x] = len(self.euler_order)
                 self.euler_order.append(-x)
-        if mindepth:
+        if get_euler_mindepth:
             self.euler_mindepth = SegAccumCalc(
                 self.euler_order,
                 calc=lambda i,j: i if self.depth[abs(i)] <= self.depth[abs(j)] else j,
@@ -783,7 +832,9 @@ class Tree:
                 )
 
     def is_directline(self, a, b):
-        if (self.euler_left[a] <= self.euler_left[b]
+        if (a in self.euler_left and a in self.euler_right
+            and b in self.euler_left and b in self.euler_right
+            and self.euler_left[a] <= self.euler_left[b]
             and self.euler_right[b] <= self.euler_right[a]):
             return True
         else:
@@ -792,6 +843,9 @@ class Tree:
     def lca(self, a, b):
         if a == b:
             return a
+        elif not (a in self.euler_left and a in self.euler_right
+            and b in self.euler_left and b in self.euler_right):
+            return None
         if self.euler_left[a] > self.euler_left[b]:
             a, b = b, a
         if self.is_directline(a, b):
