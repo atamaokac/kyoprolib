@@ -424,7 +424,7 @@ class ModComb:
                 self.inv_fact[i] = self.inv_fact[i+1]*(i+1) % self.mod
 
     def __call__(self, n, k):
-        if not (n > 0 and 0 <= k <= n):
+        if not (0 <= k <= n):
             return 0
         else:
             self.make_memory(n)
