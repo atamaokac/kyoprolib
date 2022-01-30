@@ -428,7 +428,7 @@ class ModComb:
             return 0
         else:
             self.make_memory(n)
-            return self.fact[n] * self.inv_fact[k] * self.inv_fact[n-k] % self.mod
+            return self.fact[n] % self.mod * self.inv_fact[k] % self.mod * self.inv_fact[n-k] % self.mod
 
 class SegmentTree:
     def __init__(self, value=[], N=0, comp=lambda x,y: x<=y, reverse=False):
