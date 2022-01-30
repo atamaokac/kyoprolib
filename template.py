@@ -5,4 +5,6 @@
 # input = lambda: sys.stdin.readline().rstrip()
 # sys.setrecursionlimit(10**9)
 # MOD = 10**9 + 7
-inpl = lambda: list(map(int,input().split()))
+# import sys
+# inplall = lambda: list(map(lambda x: list(map(int,x.split())), sys.stdin.readlines()))
+inpl = lambda oneindex=False: list(map(lambda x: int(x)-int(bool(oneindex)),input().split()))
