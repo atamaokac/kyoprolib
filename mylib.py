@@ -647,7 +647,7 @@ class Graph:
                 for cw in self.links(x):
                     if self.weighted:   c = cw[0]
                     else:   c = cw
-                    if c != self.parent[x] and not visited[c]:
+                    if c != self.parent[x] and c not in visited:
                         self.parent[c] = x
                         pool.append((c, Graph.FORWARD))
             else:
